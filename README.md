@@ -24,11 +24,20 @@ graph LR
     end
 
     subgraph Agents["Agent Layer"]
-        A1["3Di Product Agent<br/>domain RAG + tool-use"]
+        A1["3Di Product Agent<br/>RAG + 6 domain tools"]
         A2["Job Hunter Agent<br/>search + grade pipeline"]
         A3["Gmail Agent<br/>polling + triage"]
         A4["SYC Agent<br/>membership pipeline"]
         A5["General Router"]
+    end
+
+    subgraph ThreeDiTools["3Di Tool Suite"]
+        T1["Module Lookup<br/>XML parser"]
+        T2["WRS Diagnosis<br/>buffer gaps + symmetry"]
+        T3["Plystack Evaluator<br/>formula engine"]
+        T4["Dependency Graph<br/>Mermaid flowcharts"]
+        T5["Auto-Updater<br/>preview → apply"]
+        T6["Streamlit GUI<br/>localhost:8501"]
     end
 
     subgraph Shared["Shared Services"]
@@ -76,6 +85,15 @@ graph LR
 
     TC --> CL
     A1 --> CR
+    A1 --> T1
+    A1 --> T2
+    A1 --> T3
+    A1 --> T4
+    A1 --> T5
+    T6 --> T1
+    T6 --> T2
+    T6 --> T3
+    T6 --> T5
     A3 --> GM
     A4 --> CS
     A4 --> GM
@@ -87,12 +105,13 @@ graph LR
     style Bot fill:#1a1a2e,color:#fff
     style Agents fill:#16213e,color:#fff
     style Shared fill:#0f3460,color:#fff
+    style ThreeDiTools fill:#1b4332,color:#fff
     style External fill:#533483,color:#fff
 ```
 
 ## What It Does
 
-- **Domain RAG Agent** — Answers technical questions about a proprietary manufacturing execution system (MES) by querying a ChromaDB knowledge base built from XML modules, C# source, Excel specs, and markdown documentation. Includes reconciliation reporting and knowledge-gap tracking. The unusual part: I'm both the AI builder and the domain expert for the proprietary system the AI runs on top of.
+- **Domain RAG Agent** — Answers technical questions about a proprietary manufacturing execution system (MES) by querying a ChromaDB knowledge base (4,400+ chunks from XML modules, C# source, Excel specs, and markdown documentation). Beyond RAG, the agent exposes 6 callable tools: module lookup (full XML vocabulary parser), WRS diagnosis (buffer gap analysis, ply symmetry checks), plystack evaluation (recursive-descent formula engine that resolves the full Warps expression language), dependency graphing (Mermaid flowcharts across 264 module files), and a two-step auto-updater (preview diff → apply with backup). All tools also accessible via a Streamlit GUI for non-Discord use. The unusual part: I'm both the AI builder and the domain expert for the proprietary system the AI runs on top of.
 
 - **Job Hunter Agent** — Automated pipeline that discovers, scores, and filters 300+ job postings per run across 32 target companies and 5 job platforms (Adzuna, Greenhouse, Lever, Ashby, Pinpoint). Two-pass LLM grading: Haiku fast-grades every job (~$0.01/job), Opus deep-grades top scorers. Calibrated 5-axis scoring rubric with 10 anchor examples. 3x/week email digest. Companion Firefox extension for on-demand grading.
 
@@ -158,6 +177,7 @@ The bot runs on an always-on machine with auto-start via Windows Task Scheduler.
 | Discord | discord.py |
 | AI | Claude API via Anthropic SDK (Haiku, Sonnet, Opus) |
 | RAG | ChromaDB + sentence-transformers (all-MiniLM-L6-v2) |
+| Domain Tools | Streamlit (GUI), recursive-descent expression evaluator, XML parser |
 | Email | Google Gmail API (OAuth2) |
 | Job Platforms | Adzuna, Greenhouse, Lever, Ashby, Pinpoint |
 | CRM | ClubSpot API |
