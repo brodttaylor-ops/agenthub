@@ -46,6 +46,10 @@ graph LR
         UJ["extract_json<br/>robust JSON extraction"]
     end
 
+    subgraph MCP["MCP Server (FastMCP)"]
+        MS["3di-warps<br/>10 tools + 2 resources"]
+    end
+
     subgraph External["External Services"]
         CL["Claude API<br/>Haiku / Sonnet / Opus"]
         CR["ChromaDB<br/>~4,400 chunks"]
@@ -94,6 +98,12 @@ graph LR
     T6 --> T2
     T6 --> T3
     T6 --> T5
+    MS --> T1
+    MS --> T2
+    MS --> T3
+    MS --> T4
+    MS --> T5
+    CC["Claude Code /<br/>Claude Desktop"] -.->|"MCP stdio"| MS
     A3 --> GM
     A4 --> CS
     A4 --> GM
@@ -106,6 +116,7 @@ graph LR
     style Agents fill:#16213e,color:#fff
     style Shared fill:#0f3460,color:#fff
     style ThreeDiTools fill:#1b4332,color:#fff
+    style MCP fill:#6b3fa0,color:#fff
     style External fill:#533483,color:#fff
 ```
 
@@ -165,6 +176,10 @@ The Discord bot routes messages by channel ID, not by command prefix or message 
 
 Each agent has its own proactive notification loop with independent timing and a 120-second timeout. A hung Gmail API call doesn't block the Job Hunter's scheduled run. This replaced an earlier design where all agents shared a single sequential loop — one slow agent would delay all the others.
 
+### MCP Server — [`mcp_3di_server.py`](examples/mcp_3di_server.py)
+
+Instead of building a chatbot that *contains* Claude, this gives Claude direct access to the domain tools via the Model Context Protocol. The MCP server wraps all 10 analysis tools as callable endpoints — Claude Code or Claude Desktop connects over stdio and can call `evaluate_plystack`, `analyze_wrs`, `module_dependencies`, etc. alongside its own reasoning. This means you can drag in 8 raw .wrs files, ask "why is the scarf behaving wrong?", and Claude can both reason about the XML and call the plystack evaluator in the same conversation. The server also exposes domain reference documents as MCP resources.
+
 ### Process-Level Locking — [`process_lock.py`](examples/process_lock.py)
 
 The bot runs on an always-on machine with auto-start via Windows Task Scheduler. The lock mechanism scans all running Python processes for other `bot.py` instances before starting. Combined with a hostname guard (the bot only runs on one specific machine), this prevents duplicate instances from OneDrive sync or accidental launches.
@@ -177,7 +192,7 @@ The bot runs on an always-on machine with auto-start via Windows Task Scheduler.
 | Discord | discord.py |
 | AI | Claude API via Anthropic SDK (Haiku, Sonnet, Opus) |
 | RAG | ChromaDB + sentence-transformers (all-MiniLM-L6-v2) |
-| Domain Tools | Streamlit (GUI), recursive-descent expression evaluator, XML parser |
+| Domain Tools | FastMCP (MCP server), Streamlit (GUI), recursive-descent expression evaluator, XML parser |
 | Email | Google Gmail API (OAuth2) |
 | Job Platforms | Adzuna, Greenhouse, Lever, Ashby, Pinpoint |
 | CRM | ClubSpot API |
